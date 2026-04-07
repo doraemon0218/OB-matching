@@ -152,52 +152,54 @@ export default function AdminPage() {
             </li>
           </ul>
         </div>
-        <form onSubmit={login} className="mt-8 space-y-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-          {loginErr && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{loginErr}</div>
-          )}
-          <div>
-            <label className="text-xs font-medium text-stone-600">ID</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              autoComplete="username"
-            />
+        <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+          <form onSubmit={login} className="space-y-4">
+            {loginErr && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{loginErr}</div>
+            )}
+            <div>
+              <label className="text-xs font-medium text-stone-600">ID</label>
+              <input
+                className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                autoComplete="username"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-stone-600">パスワード</label>
+              <input
+                type="password"
+                className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loginLoading || skipLoading}
+              className="w-full rounded-xl bg-stone-800 py-3 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {loginLoading ? "…" : "ログイン"}
+            </button>
+          </form>
+
+          <div className="mt-4 border-t border-stone-200 pt-4">
+            <p className="text-xs font-medium text-stone-600">ID / パスワードを省略</p>
+            <p className="mt-1 text-[11px] leading-snug text-stone-500">
+              <code className="rounded bg-stone-100 px-0.5">npm run dev</code> では利用可。本番は{" "}
+              <code className="rounded bg-stone-100 px-0.5">ADMIN_DEV_SKIP=1</code> が必要（公開サイトはオフ推奨）。
+            </p>
+            <button
+              type="button"
+              disabled={loginLoading || skipLoading}
+              onClick={() => skipLogin()}
+              className="mt-3 w-full rounded-xl border-2 border-teal-600 bg-teal-50 py-3 text-sm font-bold text-teal-900 hover:bg-teal-100 disabled:opacity-50"
+            >
+              {skipLoading ? "処理中…" : "Skip — ログイン画面へ進む"}
+            </button>
           </div>
-          <div>
-            <label className="text-xs font-medium text-stone-600">パスワード</label>
-            <input
-              type="password"
-              className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loginLoading || skipLoading}
-            className="w-full rounded-xl bg-stone-800 py-3 text-sm font-semibold text-white disabled:opacity-50"
-          >
-            {loginLoading ? "…" : "ログイン"}
-          </button>
-        </form>
-        <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 px-3 py-3">
-          <p className="text-xs font-medium text-stone-600">パスワード画面を省略</p>
-          <p className="mt-1 text-[11px] leading-snug text-stone-500">
-            ローカル（<code className="rounded bg-white px-0.5">npm run dev</code>）では常に利用できます。
-            本番では Vercel に <code className="rounded bg-white px-0.5">ADMIN_DEV_SKIP=1</code> を設定したときのみ有効です（
-            公開 URL では原則オフ推奨）。
-          </p>
-          <button
-            type="button"
-            disabled={loginLoading || skipLoading}
-            onClick={() => skipLogin()}
-            className="mt-3 w-full rounded-lg border border-stone-300 bg-white py-2.5 text-sm font-medium text-stone-800 hover:bg-stone-100 disabled:opacity-50"
-          >
-            {skipLoading ? "処理中…" : "ログインをスキップして進む"}
-          </button>
         </div>
         <p className="mt-8 text-center">
           <Link href="/" className="text-sm text-stone-500 underline">
