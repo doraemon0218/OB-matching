@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { dbInsertOb } from "@/lib/db";
-
-export const runtime = "nodejs";
+import { registrationErrorMessage } from "@/lib/register-errors";
 import { SPECIALTIES } from "@/lib/specialties";
 import { setObCookie } from "@/lib/ob-session";
+
+export const runtime = "nodejs";
 
 const specSet = new Set(SPECIALTIES);
 
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     await setObCookie(id);
     return NextResponse.json({ ok: true, id });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "登録に失敗しました" }, { status: 500 });
+    console.error("[POST /api/ob]", e);
+    return NextResponse.json({ error: registrationErrorMessage(e) }, { status: 500 });
   }
 }

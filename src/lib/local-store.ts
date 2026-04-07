@@ -90,8 +90,16 @@ export async function withLocalStore<T>(fn: (snap: LocalSnapshot) => T | Promise
 
 export async function mutateLocalStore(fn: (snap: LocalSnapshot) => void | Promise<void>): Promise<void> {
   return runLocked(async () => {
-    const snap = await readRaw();
-    await fn(snap);
-    await writeRaw(snap);
+    try {
+      const snap = await readRaw();
+      await fn(snap);
+      await writeRaw(snap);
+    } catch (e) {
+      const err = e as NodeJS.ErrnoException & { code?: string };
+      if (err.code === "EROFS" || err.code === "EACCES" || err.code === "EPERM") {
+        throw new Error(`${err.code}: read-only or permission denied writing local DB`);
+      }
+      throw e;
+    }
   });
 }

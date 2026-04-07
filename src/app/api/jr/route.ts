@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { dbInsertJr } from "@/lib/db";
-
-export const runtime = "nodejs";
 import { newJrId } from "@/lib/ids";
+import { registrationErrorMessage } from "@/lib/register-errors";
 import { SPECIALTIES } from "@/lib/specialties";
 import type { JrYear } from "@/lib/types";
+
+export const runtime = "nodejs";
 
 const specSet = new Set(SPECIALTIES);
 
@@ -58,11 +59,11 @@ export async function POST(req: Request) {
     });
     if (!res.ok) {
       if (res.duplicateNick) return bad("このニックネームは既に使われています", 409);
-      return NextResponse.json({ error: "登録に失敗しました" }, { status: 500 });
+      return NextResponse.json({ error: "登録を完了できませんでした。" }, { status: 500 });
     }
     return NextResponse.json({ ok: true, id: res.id });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "登録に失敗しました" }, { status: 500 });
+    console.error("[POST /api/jr]", e);
+    return NextResponse.json({ error: registrationErrorMessage(e) }, { status: 500 });
   }
 }

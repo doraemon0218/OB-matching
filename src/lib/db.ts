@@ -34,8 +34,8 @@ export async function dbInsertJr(row: Omit<LocalJr, "id" | "created_at"> & { id?
     });
     if (error) {
       if (error.code === "23505") return { ok: false, duplicateNick: true };
-      console.error(error);
-      throw new Error("insert jr");
+      console.error("[dbInsertJr]", error);
+      throw new Error(`SUPABASE_INSERT:${error.code ?? "?"}:${error.message}`);
     }
     return { ok: true, id };
   }
@@ -83,8 +83,8 @@ export async function dbInsertOb(row: Omit<LocalOb, "id" | "created_at"> & { id?
       msg: row.msg,
     });
     if (error) {
-      console.error(error);
-      throw new Error("insert ob");
+      console.error("[dbInsertOb]", error);
+      throw new Error(`SUPABASE_INSERT:${error.code ?? "?"}:${error.message}`);
     }
     return id;
   }
