@@ -29,23 +29,39 @@ export default function JrRegisterPage() {
       setNickOk(null);
       return;
     }
-    const res = await fetch(`/api/jr/nick-available?nick=${encodeURIComponent(t)}`);
-    const j = await res.json();
-    setNickOk(Boolean(j.available));
+    try {
+      const res = await fetch(`/api/jr/nick-available?nick=${encodeURIComponent(t)}`);
+      const j = (await res.json()) as { available?: boolean; error?: string };
+      if (!res.ok || typeof j.available !== "boolean") {
+        setNickOk(null);
+        return;
+      }
+      setNickOk(j.available);
+    } catch {
+      setNickOk(null);
+    }
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!year) {
+      setError("研修年次（1年目 / 2年目）を選んでください");
+      return;
+    }
+    if (!spec1 || !spec2 || !spec3) {
+      setError("診療科 Top3 をすべて選んでください");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/jr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          last,
-          first,
-          nick,
+          last: last.trim(),
+          first: first.trim(),
+          nick: nick.trim(),
           year,
           spec1,
           spec2,
@@ -53,12 +69,20 @@ export default function JrRegisterPage() {
           mentor,
         }),
       });
-      const j = await res.json();
+      let j: { error?: string; ok?: boolean };
+      try {
+        j = await res.json();
+      } catch {
+        setError("サーバーからの応答を読み取れませんでした。しばらくしてから再度お試しください。");
+        return;
+      }
       if (!res.ok) {
-        setError(j.error ?? "送信に失敗しました");
+        setError(typeof j.error === "string" ? j.error : "送信に失敗しました");
         return;
       }
       setDone(true);
+    } catch {
+      setError("通信に失敗しました。接続を確認してから再度お試しください。");
     } finally {
       setSubmitting(false);
     }
@@ -154,10 +178,17 @@ export default function JrRegisterPage() {
               {nickOk === true && <p className="mt-1 text-xs text-teal-700">利用可能です</p>}
             </div>
             <fieldset>
-              <legend className="text-xs font-medium text-stone-600">研修年次</legend>
+              <legend className="text-xs font-medium text-stone-600">研修年次（必須）</legend>
               <div className="mt-2 flex gap-4">
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="radio" name="year" value="1" checked={year === "1"} onChange={() => setYear("1")} />
+                  <input
+                    type="radio"
+                    name="year"
+                    value="1"
+                    required
+                    checked={year === "1"}
+                    onChange={() => setYear("1")}
+                  />
                   1年目
                 </label>
                 <label className="flex items-center gap-2 text-sm">
@@ -165,6 +196,9 @@ export default function JrRegisterPage() {
                   2年目
                 </label>
               </div>
+              {!year && (
+                <p className="mt-1 text-xs text-amber-700">どちらかを選ぶと「登録する」ボタンが押せます</p>
+              )}
             </fieldset>
           </section>
 
@@ -243,11 +277,14 @@ export default function JrRegisterPage() {
 
           <button
             type="submit"
-            disabled={submitting || nickOk === false || !year}
+            disabled={submitting || nickOk === false}
             className="w-full rounded-xl bg-stone-800 py-3 text-sm font-semibold text-white disabled:opacity-50"
           >
             {submitting ? "送信中…" : "登録する"}
           </button>
+          {nickOk === false && (
+            <p className="mt-2 text-center text-xs text-red-600">別のニックネームにするか、未使用か確認してください</p>
+          )}
         </form>
       )}
 
