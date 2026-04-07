@@ -18,6 +18,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [loginErr, setLoginErr] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [skipLoading, setSkipLoading] = useState(false);
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [tab, setTab] = useState<Tab>("jrs");
@@ -85,6 +86,34 @@ export default function AdminPage() {
     }
   }
 
+  async function skipLogin() {
+    setLoginErr(null);
+    setSkipLoading(true);
+    try {
+      const res = await fetch("/api/admin/skip-login", {
+        method: "POST",
+        credentials: "include",
+      });
+      const text = await res.text();
+      let j: { error?: string; ok?: boolean };
+      try {
+        j = text ? JSON.parse(text) : {};
+      } catch {
+        setLoginErr(`応答が読めません（HTTP ${res.status}）`);
+        return;
+      }
+      if (!res.ok) {
+        setLoginErr(typeof j.error === "string" ? j.error : "スキップログインに失敗しました");
+        return;
+      }
+      await checkAuth();
+    } catch {
+      setLoginErr("通信に失敗しました");
+    } finally {
+      setSkipLoading(false);
+    }
+  }
+
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
     setAuthed(false);
@@ -148,12 +177,28 @@ export default function AdminPage() {
           </div>
           <button
             type="submit"
-            disabled={loginLoading}
+            disabled={loginLoading || skipLoading}
             className="w-full rounded-xl bg-stone-800 py-3 text-sm font-semibold text-white disabled:opacity-50"
           >
             {loginLoading ? "…" : "ログイン"}
           </button>
         </form>
+        <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 px-3 py-3">
+          <p className="text-xs font-medium text-stone-600">パスワード画面を省略</p>
+          <p className="mt-1 text-[11px] leading-snug text-stone-500">
+            ローカル（<code className="rounded bg-white px-0.5">npm run dev</code>）では常に利用できます。
+            本番では Vercel に <code className="rounded bg-white px-0.5">ADMIN_DEV_SKIP=1</code> を設定したときのみ有効です（
+            公開 URL では原則オフ推奨）。
+          </p>
+          <button
+            type="button"
+            disabled={loginLoading || skipLoading}
+            onClick={() => skipLogin()}
+            className="mt-3 w-full rounded-lg border border-stone-300 bg-white py-2.5 text-sm font-medium text-stone-800 hover:bg-stone-100 disabled:opacity-50"
+          >
+            {skipLoading ? "処理中…" : "ログインをスキップして進む"}
+          </button>
+        </div>
         <p className="mt-8 text-center">
           <Link href="/" className="text-sm text-stone-500 underline">
             トップへ
