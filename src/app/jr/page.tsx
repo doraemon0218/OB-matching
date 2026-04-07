@@ -69,15 +69,20 @@ export default function JrRegisterPage() {
           mentor,
         }),
       });
+      const text = await res.text();
       let j: { error?: string; ok?: boolean };
       try {
-        j = await res.json();
+        j = text ? JSON.parse(text) : {};
       } catch {
-        setError("サーバーからの応答を読み取れませんでした。しばらくしてから再度お試しください。");
+        setError(`サーバー応答が読めません（HTTP ${res.status}）。/api/health を開いて状態を確認してください。`);
         return;
       }
       if (!res.ok) {
-        setError(typeof j.error === "string" ? j.error : "送信に失敗しました");
+        const msg =
+          typeof j.error === "string" && j.error.trim()
+            ? j.error
+            : `登録に失敗しました（HTTP ${res.status}）。/api/health を確認し、Supabase のテーブルと環境変数を設定してください。`;
+        setError(msg);
         return;
       }
       setDone(true);

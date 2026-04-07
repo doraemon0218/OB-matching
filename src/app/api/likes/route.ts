@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { dbToggleLike } from "@/lib/db";
 import { getObIdFromCookie } from "@/lib/ob-session";
 
+export const runtime = "nodejs";
+
 function bad(msg: string, status = 400) {
   return NextResponse.json({ error: msg }, { status });
 }

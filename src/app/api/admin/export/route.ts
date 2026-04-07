@@ -3,6 +3,8 @@ import { isAdminAuthenticated } from "@/lib/admin-session";
 import { dbAdminExport } from "@/lib/db";
 import { CSV_BOM, toCsvRow } from "@/lib/csv";
 
+export const runtime = "nodejs";
+
 export async function GET(req: Request) {
   if (!(await isAdminAuthenticated())) {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });

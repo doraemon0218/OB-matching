@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { dbGetObById } from "@/lib/db";
 import { getObIdFromCookie } from "@/lib/ob-session";
 
+export const runtime = "nodejs";
+
 export async function GET() {
   const obId = await getObIdFromCookie();
   if (!obId) {

@@ -25,6 +25,12 @@ export default function HomePage() {
           </li>
         ))}
       </ul>
+      <p className="mt-10 text-center text-xs text-stone-400">
+        登録できないとき:{" "}
+        <a href="/api/health" className="underline">
+          サーバー状態
+        </a>
+      </p>
     </main>
   );
 }

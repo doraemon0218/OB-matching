@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { dbGetMypage } from "@/lib/db";
 
+export const runtime = "nodejs";
+
 function bad(msg: string, status = 400) {
   return NextResponse.json({ error: msg }, { status });
 }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { applyAdminSessionCookie, createAdminSessionToken } from "@/lib/admin-session";
 
+export const runtime = "nodejs";
+
 function bad(msg: string, status = 400) {
   return NextResponse.json({ error: msg }, { status });
 }

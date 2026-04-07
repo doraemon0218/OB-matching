@@ -3,6 +3,8 @@ import { dbListJrsForOb } from "@/lib/db";
 import { getObIdFromCookie } from "@/lib/ob-session";
 import { SPECIALTIES } from "@/lib/specialties";
 
+export const runtime = "nodejs";
+
 function bad(msg: string, status = 400) {
   return NextResponse.json({ error: msg }, { status });
 }
