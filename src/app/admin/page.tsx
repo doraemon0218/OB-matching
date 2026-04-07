@@ -104,7 +104,25 @@ export default function AdminPage() {
     return (
       <main className="mx-auto max-w-sm px-4 py-16">
         <h1 className="text-xl font-bold text-stone-800">実行委員ログイン</h1>
-        <p className="mt-1 text-xs text-stone-500">本番では環境変数で ID / パスワードを設定してください</p>
+        <p className="mt-1 text-xs text-stone-500">URL は <code className="rounded bg-stone-100 px-1">/admin</code> です。</p>
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-950 leading-relaxed">
+          <p className="font-semibold text-amber-900">パスワードの扱い（仕様）</p>
+          <ul className="mt-2 list-inside list-disc space-y-1">
+            <li>
+              仕様書どおりのプロトタイプでは <strong>ID: admin</strong> ／ <strong>パスワード: 50th</strong> です。
+            </li>
+            <li>
+              <strong>ローカルで開発サーバー</strong>（<code className="rounded bg-white/70 px-1">npm run dev</code>
+              ）のときは、環境変数未設定なら上記の組み合わせでログインできます。
+            </li>
+            <li>
+              <strong>Vercel など本番</strong>では、ダッシュボードの Environment Variables に{" "}
+              <code className="rounded bg-white/70 px-1">ADMIN_PASSWORD</code>（必須）と{" "}
+              <code className="rounded bg-white/70 px-1">ADMIN_SESSION_SECRET</code>（16文字以上・必須）、必要なら{" "}
+              <code className="rounded bg-white/70 px-1">ADMIN_USER</code> を設定してください。未設定だとログインできません。
+            </li>
+          </ul>
+        </div>
         <form onSubmit={login} className="mt-8 space-y-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
           {loginErr && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{loginErr}</div>
