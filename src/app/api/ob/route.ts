@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbInsertOb } from "@/lib/db";
+
+export const runtime = "nodejs";
 import { SPECIALTIES } from "@/lib/specialties";
 import { setObCookie } from "@/lib/ob-session";
 

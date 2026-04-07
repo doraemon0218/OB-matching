@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbInsertJr } from "@/lib/db";
+
+export const runtime = "nodejs";
 import { newJrId } from "@/lib/ids";
 import { SPECIALTIES } from "@/lib/specialties";
 import type { JrYear } from "@/lib/types";

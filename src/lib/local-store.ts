@@ -37,7 +37,13 @@ export type LocalSnapshot = {
   likes: LocalLike[];
 };
 
-const FILE = path.join(process.cwd(), "data", "local-db.json");
+/** Vercel などではデプロイ先 FS が読み取り専用のため /tmp を使う（複数インスタンス間では共有されない点に注意） */
+function localDbFile(): string {
+  if (process.env.VERCEL) {
+    return path.join("/tmp", "ob-matching-local-db.json");
+  }
+  return path.join(process.cwd(), "data", "local-db.json");
+}
 
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -51,8 +57,9 @@ function runLocked<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 async function readRaw(): Promise<LocalSnapshot> {
+  const file = localDbFile();
   try {
-    const buf = await readFile(FILE, "utf8");
+    const buf = await readFile(file, "utf8");
     const j = JSON.parse(buf) as LocalSnapshot;
     return {
       jrs: Array.isArray(j.jrs) ? j.jrs : [],
@@ -65,11 +72,13 @@ async function readRaw(): Promise<LocalSnapshot> {
 }
 
 async function writeRaw(data: LocalSnapshot): Promise<void> {
-  await mkdir(path.dirname(FILE), { recursive: true });
-  const tmp = `${FILE}.${process.pid}.tmp`;
+  const file = localDbFile();
+  const dir = path.dirname(file);
+  await mkdir(dir, { recursive: true });
+  const tmp = `${file}.${process.pid}.tmp`;
   const payload = JSON.stringify(data, null, 2);
   await writeFile(tmp, payload, "utf8");
-  await rename(tmp, FILE);
+  await rename(tmp, file);
 }
 
 export async function withLocalStore<T>(fn: (snap: LocalSnapshot) => T | Promise<T>): Promise<T> {
