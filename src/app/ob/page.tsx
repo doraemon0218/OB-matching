@@ -140,12 +140,25 @@ export default function ObPage() {
         credentials: "include",
         body: JSON.stringify({ last, first, spec, msg }),
       });
-      const j = await res.json();
+      const text = await res.text();
+      let j: { error?: string; ok?: boolean };
+      try {
+        j = text ? JSON.parse(text) : {};
+      } catch {
+        setRegErr(`サーバー応答が読めません（HTTP ${res.status}）。しばらくしてから再度お試しください。`);
+        return;
+      }
       if (!res.ok) {
-        setRegErr(j.error ?? "登録に失敗しました");
+        const msg =
+          typeof j.error === "string" && j.error.trim()
+            ? j.error
+            : `登録に失敗しました（HTTP ${res.status}）。Vercel のログと Supabase の設定を確認してください。`;
+        setRegErr(msg);
         return;
       }
       await refreshMe();
+    } catch {
+      setRegErr("通信に失敗しました。接続を確認してから再度お試しください。");
     } finally {
       setRegSubmit(false);
     }

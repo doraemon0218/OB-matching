@@ -6,6 +6,7 @@ import { SPECIALTIES } from "@/lib/specialties";
 import type { JrYear } from "@/lib/types";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const specSet = new Set(SPECIALTIES);
 

@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { dbInsertOb } from "@/lib/db";
 import { registrationErrorMessage } from "@/lib/register-errors";
 import { SPECIALTIES } from "@/lib/specialties";
-import { setObCookie } from "@/lib/ob-session";
+import { applyObCookie } from "@/lib/ob-session";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const specSet = new Set(SPECIALTIES);
 
@@ -34,8 +35,8 @@ export async function POST(req: Request) {
 
   try {
     const id = await dbInsertOb({ last, first, spec, msg });
-    await setObCookie(id);
-    return NextResponse.json({ ok: true, id });
+    const res = NextResponse.json({ ok: true, id });
+    return applyObCookie(res, id);
   } catch (e) {
     console.error("[POST /api/ob]", e);
     return NextResponse.json({ error: registrationErrorMessage(e) }, { status: 500 });

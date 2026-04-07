@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAdminSessionToken, setAdminCookie } from "@/lib/admin-session";
+import { applyAdminSessionCookie, createAdminSessionToken } from "@/lib/admin-session";
 
 function bad(msg: string, status = 400) {
   return NextResponse.json({ error: msg }, { status });
@@ -29,11 +29,10 @@ export async function POST(req: Request) {
 
   try {
     const token = createAdminSessionToken();
-    await setAdminCookie(token);
+    const res = NextResponse.json({ ok: true });
+    return applyAdminSessionCookie(res, token);
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "セッションの作成に失敗しました（ADMIN_SESSION_SECRET を確認）" }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true });
 }

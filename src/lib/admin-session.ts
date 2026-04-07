@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 
 const COOKIE = "admin_session";
 const MAX_AGE_SEC = 60 * 60 * 12;
@@ -44,15 +45,15 @@ export function verifyAdminSessionToken(token: string): boolean {
   }
 }
 
-export async function setAdminCookie(token: string) {
-  const store = await cookies();
-  store.set(COOKIE, token, {
+export function applyAdminSessionCookie(res: NextResponse, token: string): NextResponse {
+  res.cookies.set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: MAX_AGE_SEC,
   });
+  return res;
 }
 
 export async function clearAdminCookie() {
