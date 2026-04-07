@@ -297,7 +297,7 @@ export default function AdminPage() {
               )}
               {tab === "obs" && (
                 <tr>
-                  {["姓", "名", "専門科", "ひとこと", "いいね", "JRニックネーム"].map((h) => (
+                  {["姓", "名", "卒業", "専門科", "所属", "ひとこと", "いいね", "JRニックネーム"].map((h) => (
                     <th key={h} className="whitespace-nowrap px-3 py-2 font-semibold">
                       {h}
                     </th>
@@ -345,8 +345,12 @@ export default function AdminPage() {
                   <tr key={i} className="border-b border-stone-100">
                     <td className="px-3 py-2">{String(r.last ?? "")}</td>
                     <td className="px-3 py-2">{String(r.first ?? "")}</td>
+                    <td className="whitespace-nowrap px-3 py-2">{String(r.grad_year ?? "")}</td>
                     <td className="max-w-[140px] truncate px-3 py-2" title={String(r.spec ?? "")}>
                       {String(r.spec ?? "")}
+                    </td>
+                    <td className="max-w-[160px] truncate px-3 py-2" title={String(r.affiliation ?? "")}>
+                      {String(r.affiliation ?? "")}
                     </td>
                     <td className="max-w-[200px] truncate px-3 py-2" title={String(r.msg ?? "")}>
                       {String(r.msg ?? "")}

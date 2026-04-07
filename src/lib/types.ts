@@ -28,10 +28,16 @@ export type ObRow = {
   id: string;
   last: string;
   first: string;
+  password_hash: string;
+  grad_year: string;
   spec: string;
+  affiliation: string;
   msg: string | null;
   created_at: string;
 };
+
+/** Cookie セッション・API 応答用（ハッシュは含めない） */
+export type ObPublic = Omit<ObRow, "password_hash">;
 
 export type LikeRow = {
   ob_id: string;

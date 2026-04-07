@@ -54,7 +54,7 @@ export async function GET(req: Request) {
         );
       }
     } else if (type === "obs") {
-      lines.push(toCsvRow(["姓", "名", "専門科", "ひとこと", "いいね数", "いいねしたJRニックネーム"]));
+      lines.push(toCsvRow(["姓", "名", "卒業年度", "専門科", "所属", "ひとこと", "いいね数", "いいねしたJRニックネーム"]));
       const countByOb = new Map<string, number>();
       const nicksByOb = new Map<string, string[]>();
       for (const l of likes) {
@@ -70,7 +70,9 @@ export async function GET(req: Request) {
           toCsvRow([
             o.last,
             o.first,
+            o.grad_year ?? "",
             o.spec,
+            o.affiliation ?? "",
             o.msg ?? "",
             String(countByOb.get(o.id) ?? 0),
             (nicksByOb.get(o.id) ?? []).join("、"),

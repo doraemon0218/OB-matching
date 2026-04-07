@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
-import { dbInsertOb } from "@/lib/db";
-import { hashPassword } from "@/lib/password";
-import { registrationErrorMessage } from "@/lib/register-errors";
+import { dbUpdateObProfile } from "@/lib/db";
 import { SPECIALTIES } from "@/lib/specialties";
-import { applyObCookie } from "@/lib/ob-session";
+import { getObIdFromCookie } from "@/lib/ob-session";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 const specSet = new Set(SPECIALTIES);
-
-function bad(msg: string, status = 400) {
-  return NextResponse.json({ error: msg }, { status });
-}
 
 const GRAD_MIN = 1950;
 const GRAD_MAX = new Date().getFullYear() + 1;
@@ -23,7 +16,14 @@ function validGradYear(y: string): boolean {
   return n >= GRAD_MIN && n <= GRAD_MAX;
 }
 
-export async function POST(req: Request) {
+function bad(msg: string, status = 400) {
+  return NextResponse.json({ error: msg }, { status });
+}
+
+export async function PATCH(req: Request) {
+  const obId = await getObIdFromCookie();
+  if (!obId) return bad("ログインが必要です", 401);
+
   let body: unknown;
   try {
     body = await req.json();
@@ -31,11 +31,9 @@ export async function POST(req: Request) {
     return bad("JSON が不正です");
   }
   if (!body || typeof body !== "object") return bad("リクエストが不正です");
-
   const b = body as Record<string, unknown>;
   const last = String(b.last ?? "").trim();
   const first = String(b.first ?? "").trim();
-  const password = String(b.password ?? "");
   const grad_year = String(b.grad_year ?? "").trim();
   const spec = String(b.spec ?? "").trim();
   const affiliation = String(b.affiliation ?? "").trim();
@@ -43,7 +41,6 @@ export async function POST(req: Request) {
   const msg = msgRaw.trim() || null;
 
   if (!last || !first) return bad("姓・名は必須です");
-  if (password.length < 8) return bad("パスワードは8文字以上にしてください");
   if (!validGradYear(grad_year)) return bad("卒業年度を正しく選んでください");
   if (!spec || !specSet.has(spec)) return bad("専門科を選択してください");
   if (!affiliation) return bad("所属を入力してください");
@@ -51,23 +48,14 @@ export async function POST(req: Request) {
   if (msg && msg.length > 200) return bad("研修医へのメッセージは200文字以内にしてください");
 
   try {
-    const password_hash = await hashPassword(password);
-    const ins = await dbInsertOb({
-      last,
-      first,
-      password_hash,
-      grad_year,
-      spec,
-      affiliation,
-      msg,
-    });
-    if (!ins.ok) {
-      return bad("同じ氏名の OB が既に登録されています。マイページからログインするか、実行委員にお問い合わせください。", 409);
+    const r = await dbUpdateObProfile(obId, { last, first, grad_year, spec, affiliation, msg });
+    if (r.ok === false && "notFound" in r && r.notFound) return bad("セッションが無効です", 401);
+    if (r.ok === false && "duplicateName" in r && r.duplicateName) {
+      return bad("その氏名は既に別の登録で使われています", 409);
     }
-    const res = NextResponse.json({ ok: true, id: ins.id });
-    return applyObCookie(res, ins.id);
+    return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error("[POST /api/ob]", e);
-    return NextResponse.json({ error: registrationErrorMessage(e) }, { status: 500 });
+    console.error(e);
+    return NextResponse.json({ error: "更新に失敗しました" }, { status: 500 });
   }
 }

@@ -5,7 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { newJrId, newObId } from "@/lib/ids";
 import { mutateLocalStore, withLocalStore, type LocalJr, type LocalLike, type LocalOb } from "@/lib/local-store";
-import type { JrPublic, JrYear } from "@/lib/types";
+import type { JrPublic, JrYear, ObPublic } from "@/lib/types";
 
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -73,47 +73,172 @@ export async function dbNickAvailable(nick: string): Promise<boolean> {
   return withLocalStore((s) => !s.jrs.some((j) => j.nick === nick));
 }
 
-export async function dbInsertOb(row: Omit<LocalOb, "id" | "created_at"> & { id?: string }): Promise<string> {
+function supabaseObToLocal(row: Record<string, unknown>): LocalOb {
+  return {
+    id: String(row.id),
+    last: String(row.last ?? ""),
+    first: String(row.first ?? ""),
+    password_hash: String(row.password_hash ?? ""),
+    grad_year: String(row.grad_year ?? ""),
+    spec: String(row.spec ?? ""),
+    affiliation: String(row.affiliation ?? ""),
+    msg: row.msg != null && row.msg !== "" ? String(row.msg) : null,
+    created_at: typeof row.created_at === "string" ? row.created_at : new Date().toISOString(),
+  };
+}
+
+function stripObPublic(o: LocalOb): ObPublic {
+  return {
+    id: o.id,
+    last: o.last,
+    first: o.first,
+    grad_year: o.grad_year,
+    spec: o.spec,
+    affiliation: o.affiliation,
+    msg: o.msg,
+    created_at: o.created_at,
+  };
+}
+
+export async function dbGetObFullById(obId: string): Promise<LocalOb | null> {
+  if (isSupabaseConfigured()) {
+    const { data, error } = await sb().from("obs").select("*").eq("id", obId).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return supabaseObToLocal(data as Record<string, unknown>);
+  }
+  return withLocalStore((s) => s.obs.find((o) => o.id === obId) ?? null);
+}
+
+/** 公開用（password_hash を含まない） */
+export async function dbGetObById(obId: string): Promise<ObPublic | null> {
+  const full = await dbGetObFullById(obId);
+  return full ? stripObPublic(full) : null;
+}
+
+export async function dbFindObByName(last: string, first: string): Promise<LocalOb | null> {
+  const L = last.trim();
+  const F = first.trim();
+  if (!L || !F) return null;
+  if (isSupabaseConfigured()) {
+    const { data, error } = await sb().from("obs").select("*").eq("last", L).eq("first", F).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return supabaseObToLocal(data as Record<string, unknown>);
+  }
+  return withLocalStore((s) => s.obs.find((o) => o.last === L && o.first === F) ?? null);
+}
+
+export async function dbObNameTaken(last: string, first: string, excludeObId?: string): Promise<boolean> {
+  const L = last.trim();
+  const F = first.trim();
+  if (!L || !F) return false;
+  if (isSupabaseConfigured()) {
+    const { data, error } = await sb().from("obs").select("id").eq("last", L).eq("first", F).maybeSingle();
+    if (error) throw error;
+    if (!data) return false;
+    return excludeObId ? data.id !== excludeObId : true;
+  }
+  return withLocalStore((s) => s.obs.some((o) => o.last === L && o.first === F && o.id !== excludeObId));
+}
+
+export async function dbInsertOb(
+  row: Omit<LocalOb, "id" | "created_at"> & { id?: string }
+): Promise<{ ok: true; id: string } | { ok: false; duplicateName: true }> {
   const id = row.id ?? newObId();
   const created_at = new Date().toISOString();
   if (isSupabaseConfigured()) {
     const { error } = await sb().from("obs").insert({
       id,
-      last: row.last,
-      first: row.first,
+      last: row.last.trim(),
+      first: row.first.trim(),
+      password_hash: row.password_hash,
+      grad_year: row.grad_year,
       spec: row.spec,
+      affiliation: row.affiliation,
       msg: row.msg,
     });
     if (error) {
+      if (error.code === "23505") return { ok: false, duplicateName: true };
       console.error("[dbInsertOb]", error);
       throw new Error(`SUPABASE_INSERT:${error.code ?? "?"}:${error.message}`);
     }
-    return id;
+    return { ok: true, id };
   }
+  let dup = false;
   await mutateLocalStore((s) => {
+    if (s.obs.some((o) => o.last === row.last.trim() && o.first === row.first.trim())) {
+      dup = true;
+      return;
+    }
     s.obs.push({
       id,
-      last: row.last,
-      first: row.first,
+      last: row.last.trim(),
+      first: row.first.trim(),
+      password_hash: row.password_hash,
+      grad_year: row.grad_year,
       spec: row.spec,
+      affiliation: row.affiliation,
       msg: row.msg,
       created_at,
     });
   });
-  return id;
+  if (dup) return { ok: false, duplicateName: true };
+  return { ok: true, id };
 }
 
-export async function dbGetObById(obId: string): Promise<LocalOb | null> {
+export async function dbUpdateObProfile(
+  obId: string,
+  patch: Pick<LocalOb, "last" | "first" | "grad_year" | "spec" | "affiliation" | "msg">
+): Promise<{ ok: true } | { ok: false; notFound: true } | { ok: false; duplicateName: true }> {
+  const last = patch.last.trim();
+  const first = patch.first.trim();
   if (isSupabaseConfigured()) {
-    const { data, error } = await sb()
+    const existing = await dbGetObFullById(obId);
+    if (!existing) return { ok: false, notFound: true };
+    const taken = await dbObNameTaken(last, first, obId);
+    if (taken) return { ok: false, duplicateName: true };
+    const { error } = await sb()
       .from("obs")
-      .select("id, last, first, spec, msg, created_at")
-      .eq("id", obId)
-      .maybeSingle();
-    if (error) throw error;
-    return data as LocalOb | null;
+      .update({
+        last,
+        first,
+        grad_year: patch.grad_year,
+        spec: patch.spec,
+        affiliation: patch.affiliation,
+        msg: patch.msg,
+      })
+      .eq("id", obId);
+    if (error) {
+      if (error.code === "23505") return { ok: false, duplicateName: true };
+      throw error;
+    }
+    return { ok: true };
   }
-  return withLocalStore((s) => s.obs.find((o) => o.id === obId) ?? null);
+  let result: { ok: true } | { ok: false; notFound: true } | { ok: false; duplicateName: true } = {
+    ok: false,
+    notFound: true,
+  };
+  await mutateLocalStore((s) => {
+    const idx = s.obs.findIndex((o) => o.id === obId);
+    if (idx < 0) {
+      result = { ok: false, notFound: true };
+      return;
+    }
+    if (s.obs.some((o) => o.id !== obId && o.last === last && o.first === first)) {
+      result = { ok: false, duplicateName: true };
+      return;
+    }
+    const o = s.obs[idx]!;
+    o.last = last;
+    o.first = first;
+    o.grad_year = patch.grad_year;
+    o.spec = patch.spec;
+    o.affiliation = patch.affiliation;
+    o.msg = patch.msg;
+    result = { ok: true };
+  });
+  return result;
 }
 
 export type JrListFilters = { spec: string | "all" };
@@ -446,7 +571,9 @@ function buildAdminRows(
       id: o.id,
       last: o.last,
       first: o.first,
+      grad_year: o.grad_year,
       spec: o.spec,
+      affiliation: o.affiliation,
       msg: o.msg,
       likeCount: countByOb.get(o.id) ?? 0,
       jrNicks: (jrNicksByOb.get(o.id) ?? []).join("、"),

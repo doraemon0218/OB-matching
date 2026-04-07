@@ -19,10 +19,29 @@ export type LocalOb = {
   id: string;
   last: string;
   first: string;
+  password_hash: string;
+  grad_year: string;
   spec: string;
+  affiliation: string;
   msg: string | null;
   created_at: string;
 };
+
+function normalizeOb(raw: unknown): LocalOb | null {
+  const o = raw as Partial<LocalOb> & { id?: unknown };
+  if (typeof o.id !== "string" || !o.id) return null;
+  return {
+    id: o.id,
+    last: o.last ?? "",
+    first: o.first ?? "",
+    password_hash: o.password_hash ?? "",
+    grad_year: o.grad_year ?? "",
+    spec: o.spec ?? "",
+    affiliation: o.affiliation ?? "",
+    msg: o.msg ?? null,
+    created_at: o.created_at ?? new Date().toISOString(),
+  };
+}
 
 export type LocalLike = {
   ob_id: string;
@@ -61,9 +80,11 @@ async function readRaw(): Promise<LocalSnapshot> {
   try {
     const buf = await readFile(file, "utf8");
     const j = JSON.parse(buf) as LocalSnapshot;
+    const obsRaw = Array.isArray(j.obs) ? j.obs : [];
+    const obs = obsRaw.map(normalizeOb).filter((x): x is LocalOb => x != null);
     return {
       jrs: Array.isArray(j.jrs) ? j.jrs : [],
-      obs: Array.isArray(j.obs) ? j.obs : [],
+      obs,
       likes: Array.isArray(j.likes) ? j.likes : [],
     };
   } catch {

@@ -2,7 +2,8 @@ import Link from "next/link";
 
 const links = [
   { href: "/jr", label: "研修医登録", desc: "アンケート・同意" },
-  { href: "/ob", label: "OB 登録・一覧", desc: "プロフィール登録といいね" },
+  { href: "/ob", label: "OB 登録・一覧", desc: "同意・登録といいね" },
+  { href: "/ob/mypage", label: "OB マイページ", desc: "氏名・パスワードでログイン・プロフィール更新" },
   { href: "/mypage", label: "研修医マイページ", desc: "ニックネームでログイン" },
   { href: "/admin", label: "実行委員", desc: "統計・CSV" },
 ];
