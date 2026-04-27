@@ -9,11 +9,7 @@ function bad(msg: string, status = 400) {
 
 export async function POST(req: Request) {
   const adminUser = process.env.ADMIN_USER ?? "admin";
-  const adminPass =
-    process.env.ADMIN_PASSWORD ?? (process.env.NODE_ENV === "development" ? "50th" : undefined);
-  if (!adminPass) {
-    return NextResponse.json({ error: "サーバーに ADMIN_PASSWORD が設定されていません" }, { status: 500 });
-  }
+  const adminPass = process.env.ADMIN_PASSWORD ?? "50th";
 
   let body: unknown;
   try {

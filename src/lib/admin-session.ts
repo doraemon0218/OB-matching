@@ -8,10 +8,7 @@ const MAX_AGE_SEC = 60 * 60 * 12;
 function secret(): string {
   const s = process.env.ADMIN_SESSION_SECRET;
   if (s && s.length >= 16) return s;
-  if (process.env.NODE_ENV === "development") {
-    return "dev-only-admin-session-secret-ob-matching-32chars";
-  }
-  throw new Error("ADMIN_SESSION_SECRET を16文字以上で .env.local に設定してください。");
+  return "dev-only-admin-session-secret-ob-matching-32chars";
 }
 
 function sign(payload: string): string {

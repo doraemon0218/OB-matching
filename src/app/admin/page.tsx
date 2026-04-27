@@ -133,26 +133,22 @@ export default function AdminPage() {
     return (
       <main className="mx-auto max-w-sm px-4 py-16">
         <h1 className="text-xl font-bold text-stone-800">実行委員ログイン</h1>
-        <p className="mt-1 text-xs text-stone-500">URL は <code className="rounded bg-stone-100 px-1">/admin</code> です。</p>
-        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-950 leading-relaxed">
-          <p className="font-semibold text-amber-900">パスワードの扱い（仕様）</p>
-          <ul className="mt-2 list-inside list-disc space-y-1">
-            <li>
-              仕様書どおりのプロトタイプでは <strong>ID: admin</strong> ／ <strong>パスワード: 50th</strong> です。
-            </li>
-            <li>
-              <strong>ローカルで開発サーバー</strong>（<code className="rounded bg-white/70 px-1">npm run dev</code>
-              ）のときは、環境変数未設定なら上記の組み合わせでログインできます。
-            </li>
-            <li>
-              <strong>Vercel など本番</strong>では、ダッシュボードの Environment Variables に{" "}
-              <code className="rounded bg-white/70 px-1">ADMIN_PASSWORD</code>（必須）と{" "}
-              <code className="rounded bg-white/70 px-1">ADMIN_SESSION_SECRET</code>（16文字以上・必須）、必要なら{" "}
-              <code className="rounded bg-white/70 px-1">ADMIN_USER</code> を設定してください。未設定だとログインできません。
-            </li>
-          </ul>
+
+        <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+          <p className="text-xs font-semibold text-amber-800">ログイン情報</p>
+          <div className="mt-2 flex flex-col gap-1 text-sm">
+            <p>
+              <span className="font-medium text-stone-600">ID：</span>
+              <span className="font-bold text-stone-900">admin</span>
+            </p>
+            <p>
+              <span className="font-medium text-stone-600">パスワード：</span>
+              <span className="font-bold text-stone-900">50th</span>
+            </p>
+          </div>
         </div>
-        <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+
+        <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
           <form onSubmit={login} className="space-y-4">
             {loginErr && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{loginErr}</div>
@@ -179,27 +175,11 @@ export default function AdminPage() {
             <button
               type="submit"
               disabled={loginLoading || skipLoading}
-              className="w-full rounded-xl bg-stone-800 py-3 text-sm font-semibold text-white disabled:opacity-50"
+              className="w-full rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white disabled:opacity-50"
             >
               {loginLoading ? "…" : "ログイン"}
             </button>
           </form>
-
-          <div className="mt-4 border-t border-stone-200 pt-4">
-            <p className="text-xs font-medium text-stone-600">ID / パスワードを省略</p>
-            <p className="mt-1 text-[11px] leading-snug text-stone-500">
-              <code className="rounded bg-stone-100 px-0.5">npm run dev</code> では利用可。本番は{" "}
-              <code className="rounded bg-stone-100 px-0.5">ADMIN_DEV_SKIP=1</code> が必要（公開サイトはオフ推奨）。
-            </p>
-            <button
-              type="button"
-              disabled={loginLoading || skipLoading}
-              onClick={() => skipLogin()}
-              className="mt-3 w-full rounded-xl border-2 border-teal-600 bg-teal-50 py-3 text-sm font-bold text-teal-900 hover:bg-teal-100 disabled:opacity-50"
-            >
-              {skipLoading ? "処理中…" : "Skip — ログイン画面へ進む"}
-            </button>
-          </div>
         </div>
         <p className="mt-8 text-center">
           <Link href="/" className="text-sm text-stone-500 underline">
