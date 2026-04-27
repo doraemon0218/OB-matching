@@ -288,7 +288,7 @@ export default function AdminPage() {
             <thead className="border-b border-stone-200 bg-stone-50">
               {tab === "jrs" && (
                 <tr>
-                  {["姓", "名", "ニックネーム", "年次", "科1", "科2", "科3", "師匠像", "いいね", "いいねOB"].map((h) => (
+                  {["姓", "名", "ニックネーム", "年次", "科1", "科2", "科3", "師匠像", "希望OB", "いいね", "いいねOB"].map((h) => (
                     <th key={h} className="whitespace-nowrap px-3 py-2 font-semibold">
                       {h}
                     </th>
@@ -333,6 +333,9 @@ export default function AdminPage() {
                     </td>
                     <td className="max-w-[200px] truncate px-3 py-2" title={String(r.mentor ?? "")}>
                       {String(r.mentor ?? "")}
+                    </td>
+                    <td className="max-w-[240px] truncate px-3 py-2" title={String(r.wantedObNames ?? "")}>
+                      {String(r.wantedObNames ?? "") || "希望なし"}
                     </td>
                     <td className="px-3 py-2">{String(r.likeCount ?? "")}</td>
                     <td className="max-w-[240px] truncate px-3 py-2" title={String(r.obNames ?? "")}>

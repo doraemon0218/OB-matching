@@ -592,18 +592,20 @@ export type AdminTab = "jrs" | "obs" | "matching";
 export async function dbAdminTable(tab: AdminTab): Promise<Record<string, unknown>[]> {
   if (isSupabaseConfigured()) {
     const supabase = sb();
-    const [{ data: jrs }, { data: obs }, { data: likes }] = await Promise.all([
+    const [{ data: jrs }, { data: obs }, { data: likes }, { data: wishes }] = await Promise.all([
       supabase.from("jrs").select("*").order("created_at", { ascending: true }),
       supabase.from("obs").select("*").order("created_at", { ascending: true }),
       supabase.from("likes").select("ob_id, jr_id, created_at, viewed_at"),
+      supabase.from("jr_ob_wishes").select("jr_id, ob_id"),
     ]);
-    return buildAdminRows(tab, jrs ?? [], obs ?? [], likes ?? []);
+    return buildAdminRows(tab, jrs ?? [], obs ?? [], likes ?? [], wishes ?? []);
   }
   return withLocalStore((s) => {
     const likes: LocalLike[] = s.likes;
+    const wishes: LocalJrObWish[] = s.wishes ?? [];
     const jrs: LocalJr[] = [...s.jrs].sort((a, b) => a.created_at.localeCompare(b.created_at));
     const obs: LocalOb[] = [...s.obs].sort((a, b) => a.created_at.localeCompare(b.created_at));
-    return buildAdminRows(tab, jrs, obs, likes);
+    return buildAdminRows(tab, jrs, obs, likes, wishes);
   });
 }
 
@@ -611,7 +613,8 @@ function buildAdminRows(
   tab: AdminTab,
   jrs: LocalJr[],
   obs: LocalOb[],
-  likes: { ob_id: string; jr_id: string }[]
+  likes: { ob_id: string; jr_id: string }[],
+  wishes: { jr_id: string; ob_id: string }[] = []
 ): Record<string, unknown>[] {
   const obById = new Map(obs.map((o) => [o.id, o]));
   const jrById = new Map(jrs.map((j) => [j.id, j]));
@@ -627,6 +630,14 @@ function buildAdminRows(
       arr.push(name);
       obNamesByJr.set(l.jr_id, arr);
     }
+    const wantedObsByJr = new Map<string, string[]>();
+    for (const w of wishes) {
+      const o = obById.get(w.ob_id);
+      const name = o ? `${o.last} ${o.first}` : w.ob_id;
+      const arr = wantedObsByJr.get(w.jr_id) ?? [];
+      arr.push(name);
+      wantedObsByJr.set(w.jr_id, arr);
+    }
     return jrs.map((j) => ({
       id: j.id,
       last: j.last,
@@ -639,6 +650,7 @@ function buildAdminRows(
       mentor: j.mentor,
       likeCount: countByJr.get(j.id) ?? 0,
       obNames: (obNamesByJr.get(j.id) ?? []).join("、"),
+      wantedObNames: (wantedObsByJr.get(j.id) ?? []).join("、"),
     }));
   }
 

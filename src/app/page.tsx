@@ -1,37 +1,76 @@
 import Link from "next/link";
 
-const links = [
-  { href: "/jr", label: "研修医登録", desc: "アンケート・同意" },
-  { href: "/ob", label: "OB 登録・一覧", desc: "同意・登録といいね" },
-  { href: "/ob/mypage", label: "OB マイページ", desc: "氏名・パスワードでログイン・プロフィール更新" },
-  { href: "/mypage", label: "研修医マイページ", desc: "ニックネームでログイン" },
-  { href: "/admin", label: "実行委員", desc: "統計・CSV" },
-];
-
 export default function HomePage() {
   return (
-    <main className="mx-auto max-w-lg px-4 py-16">
-      <h1 className="text-2xl font-bold text-stone-800">師匠マッチング</h1>
-      <p className="mt-2 text-sm text-stone-600">研修制度50周年記念式典 — 入口一覧</p>
-      <ul className="mt-10 space-y-3">
-        {links.map((l) => (
-          <li key={l.href}>
-            <Link
-              href={l.href}
-              className="block rounded-xl border border-stone-200 bg-white px-4 py-4 shadow-sm transition hover:border-teal-300 hover:shadow"
-            >
-              <span className="font-semibold text-stone-800">{l.label}</span>
-              <span className="mt-1 block text-xs text-stone-500">{l.desc}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-10 text-center text-xs text-stone-400">
-        登録できないとき:{" "}
-        <a href="/api/health" className="underline">
-          サーバー状態
-        </a>
-      </p>
+    <main className="min-h-screen bg-gradient-to-b from-stone-50 to-white px-4 py-12">
+      <div className="mx-auto max-w-md">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-stone-900">師匠マッチング</h1>
+          <p className="mt-2 text-sm text-stone-500">研修制度50周年記念式典</p>
+        </div>
+
+        <div className="mt-10 space-y-4">
+          <div className="overflow-hidden rounded-2xl border border-teal-200 bg-white shadow-sm">
+            <div className="bg-teal-50 px-5 py-4">
+              <p className="text-2xl">🩺</p>
+              <h2 className="mt-1 text-lg font-bold text-teal-900">研修医</h2>
+              <p className="text-xs text-teal-700">初期研修医の方はこちら</p>
+            </div>
+            <div className="flex gap-2 p-4">
+              <Link
+                href="/jr"
+                className="flex-1 rounded-xl bg-teal-600 py-3 text-center text-sm font-semibold text-white"
+              >
+                登録する
+              </Link>
+              <Link
+                href="/mypage"
+                className="flex-1 rounded-xl border border-teal-300 py-3 text-center text-sm font-semibold text-teal-800"
+              >
+                マイページ
+              </Link>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-indigo-200 bg-white shadow-sm">
+            <div className="bg-indigo-50 px-5 py-4">
+              <p className="text-2xl">👨‍⚕️</p>
+              <h2 className="mt-1 text-lg font-bold text-indigo-900">OB・OG</h2>
+              <p className="text-xs text-indigo-700">ご参加の先生方はこちら</p>
+            </div>
+            <div className="flex gap-2 p-4">
+              <Link
+                href="/ob"
+                className="flex-1 rounded-xl bg-indigo-600 py-3 text-center text-sm font-semibold text-white"
+              >
+                登録する
+              </Link>
+              <Link
+                href="/ob/mypage"
+                className="flex-1 rounded-xl border border-indigo-300 py-3 text-center text-sm font-semibold text-indigo-800"
+              >
+                マイページ
+              </Link>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">
+            <div className="bg-amber-50 px-5 py-4">
+              <p className="text-2xl">📋</p>
+              <h2 className="mt-1 text-lg font-bold text-amber-900">実行委員</h2>
+              <p className="text-xs text-amber-700">統計・データ管理はこちら</p>
+            </div>
+            <div className="p-4">
+              <Link
+                href="/admin"
+                className="block rounded-xl bg-amber-500 py-3 text-center text-sm font-semibold text-white"
+              >
+                実行委員画面へ
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
