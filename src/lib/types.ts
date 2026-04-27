@@ -45,3 +45,13 @@ export type LikeRow = {
   created_at: string;
   viewed_at: string | null;
 };
+
+/** 研修医登録フォームに表示するOB公開情報 */
+export type ObForJr = {
+  id: string;
+  last: string;
+  first: string;
+  spec: string;
+  affiliation: string;
+  grad_year: string;
+};

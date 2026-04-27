@@ -50,10 +50,17 @@ export type LocalLike = {
   viewed_at: string | null;
 };
 
+export type LocalJrObWish = {
+  jr_id: string;
+  ob_id: string;
+  created_at: string;
+};
+
 export type LocalSnapshot = {
   jrs: LocalJr[];
   obs: LocalOb[];
   likes: LocalLike[];
+  wishes: LocalJrObWish[];
 };
 
 /** Vercel などではデプロイ先 FS が読み取り専用のため /tmp を使う（複数インスタンス間では共有されない点に注意） */
@@ -86,9 +93,10 @@ async function readRaw(): Promise<LocalSnapshot> {
       jrs: Array.isArray(j.jrs) ? j.jrs : [],
       obs,
       likes: Array.isArray(j.likes) ? j.likes : [],
+      wishes: Array.isArray(j.wishes) ? j.wishes : [],
     };
   } catch {
-    return { jrs: [], obs: [], likes: [] };
+    return { jrs: [], obs: [], likes: [], wishes: [] };
   }
 }
 

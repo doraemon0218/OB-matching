@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dbInsertJr } from "@/lib/db";
+import { dbInsertJr, dbInsertJrObWishes } from "@/lib/db";
 import { newJrId } from "@/lib/ids";
 import { registrationErrorMessage } from "@/lib/register-errors";
 import { SPECIALTIES } from "@/lib/specialties";
@@ -33,6 +33,9 @@ export async function POST(req: Request) {
   const spec3 = String(b.spec3 ?? "").trim();
   const mentorRaw = b.mentor != null ? String(b.mentor) : "";
   const mentor = mentorRaw.trim() || null;
+  const wantedObIds = Array.isArray(b.wantedObIds)
+    ? (b.wantedObIds as unknown[]).filter((x): x is string => typeof x === "string")
+    : [];
 
   if (!last || !first || !nick) return bad("姓・名・ニックネームは必須です");
   if (year !== "1" && year !== "2") return bad("研修年次を選択してください");
@@ -61,6 +64,9 @@ export async function POST(req: Request) {
     if (!res.ok) {
       if (res.duplicateNick) return bad("このニックネームは既に使われています", 409);
       return NextResponse.json({ error: "登録を完了できませんでした。" }, { status: 500 });
+    }
+    if (wantedObIds.length > 0) {
+      await dbInsertJrObWishes(res.id, wantedObIds);
     }
     return NextResponse.json({ ok: true, id: res.id });
   } catch (e) {

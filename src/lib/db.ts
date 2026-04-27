@@ -4,8 +4,8 @@
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { newJrId, newObId } from "@/lib/ids";
-import { mutateLocalStore, withLocalStore, type LocalJr, type LocalLike, type LocalOb } from "@/lib/local-store";
-import type { JrPublic, JrYear, ObPublic } from "@/lib/types";
+import { mutateLocalStore, withLocalStore, type LocalJr, type LocalLike, type LocalJrObWish, type LocalOb } from "@/lib/local-store";
+import type { JrPublic, JrYear, ObForJr, ObPublic } from "@/lib/types";
 
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -296,6 +296,92 @@ export async function dbListJrsForOb(obId: string, filters: JrListFilters): Prom
       rows = rows.filter((r) => r.specs.includes(filters.spec));
     }
     return rows;
+  });
+}
+
+export async function dbListObsForJr(nick: string): Promise<ObPublic[] | null> {
+  const n = nick.trim();
+  if (!n) return null;
+  if (isSupabaseConfigured()) {
+    const { data: jr, error: jrErr } = await sb().from("jrs").select("id").eq("nick", n).maybeSingle();
+    if (jrErr) throw jrErr;
+    if (!jr) return null;
+    const { data: obs, error: obErr } = await sb()
+      .from("obs")
+      .select("id, last, first, grad_year, spec, affiliation, msg, created_at")
+      .order("created_at", { ascending: true });
+    if (obErr) throw obErr;
+    return (obs ?? []) as ObPublic[];
+  }
+  return withLocalStore((s) => {
+    const jr = s.jrs.find((j) => j.nick === n);
+    if (!jr) return null;
+    return [...s.obs]
+      .sort((a, b) => a.created_at.localeCompare(b.created_at))
+      .map((o) => ({
+        id: o.id,
+        last: o.last,
+        first: o.first,
+        grad_year: o.grad_year,
+        spec: o.spec,
+        affiliation: o.affiliation,
+        msg: o.msg,
+        created_at: o.created_at,
+      }));
+  });
+}
+
+/** 研修医登録フォーム向け：全OBの公開情報（認証不要） */
+export async function dbListAllObsPublic(): Promise<ObForJr[]> {
+  if (isSupabaseConfigured()) {
+    const { data, error } = await sb()
+      .from("obs")
+      .select("id, last, first, spec, affiliation, grad_year")
+      .order("grad_year", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map((o) => ({
+      id: String(o.id),
+      last: String(o.last ?? ""),
+      first: String(o.first ?? ""),
+      spec: String(o.spec ?? ""),
+      affiliation: String(o.affiliation ?? ""),
+      grad_year: String(o.grad_year ?? ""),
+    }));
+  }
+  return withLocalStore((s) =>
+    [...s.obs]
+      .sort((a, b) => a.grad_year.localeCompare(b.grad_year))
+      .map((o) => ({
+        id: o.id,
+        last: o.last,
+        first: o.first,
+        spec: o.spec,
+        affiliation: o.affiliation,
+        grad_year: o.grad_year,
+      }))
+  );
+}
+
+/** 研修医が希望するOBをまとめて登録（obIds が空なら何もしない = 希望なし） */
+export async function dbInsertJrObWishes(jrId: string, obIds: string[]): Promise<void> {
+  if (!obIds.length) return;
+  const now = new Date().toISOString();
+  if (isSupabaseConfigured()) {
+    const rows = obIds.map((ob_id) => ({ jr_id: jrId, ob_id, created_at: now }));
+    const { error } = await sb().from("jr_ob_wishes").insert(rows);
+    if (error) {
+      console.error("[dbInsertJrObWishes]", error);
+      throw new Error(`SUPABASE_INSERT:${error.code ?? "?"}:${error.message}`);
+    }
+    return;
+  }
+  await mutateLocalStore((s) => {
+    if (!s.wishes) s.wishes = [];
+    for (const ob_id of obIds) {
+      if (!s.wishes.some((w: LocalJrObWish) => w.jr_id === jrId && w.ob_id === ob_id)) {
+        s.wishes.push({ jr_id: jrId, ob_id, created_at: now });
+      }
+    }
   });
 }
 
